@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+
+<style>
+
+body{
+margin:0;
+background:black;
+overflow:hidden;
+font-family:sans-serif;
+}
+
+#vr{
+display:flex;
+width:100vw;
+height:100vh;
+}
+
+.eye{
+width:50vw;
+height:100vh;
+overflow:hidden;
+position:relative;
+}
+
+video{
+position:absolute;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+height:140vh;
+filter:contrast(1.05);
+}
+
+canvas{
+position:absolute;
+width:100%;
+height:100%;
+}
+
+#ui{
+
+position:fixed;
+top:10px;
+right:10px;
+background:rgba(0,0,0,0.6);
+color:white;
+padding:12px;
+border-radius:12px;
+font-size:14px;
+
+opacity:0;
+transition:opacity .3s;
+
+}
+
+#ui.visible{
+opacity:1;
+}
+
+label{
+display:block;
+margin-top:8px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="vr">
+
+<div class="eye">
+<video id="leftVideo" autoplay playsinline></video>
+<canvas id="left"></canvas>
+</div>
+
+<div class="eye">
+<video id="rightVideo" autoplay playsinline></video>
+<canvas id="right"></canvas>
+</div>
+
+</div>
+
+<div id="ui">
+
+<label>
+IPD
+<input id="ipd" type="range" min="-80" max="80" value="0">
+</label>
+
+<label>
+Zoom
+<input id="zoom" type="range" min="120" max="200" value="140">
+</label>
+
+<label>
+Lens
+<input id="dist" type="range" min="0" max="100" value="40">
+</label>
+
+<button id="gyro">Enable head tracking</button>
+
+</div>
+
+<script>
+
+const leftVideo = document.getElementById("leftVideo")
+const rightVideo = document.getElementById("rightVideo")
+
+async function startCamera(){
+
+const stream = await navigator.mediaDevices.getUserMedia({
+
+video:{facingMode:"environment"},
+audio:false
+
+})
+
+leftVideo.srcObject = stream
+rightVideo.srcObject = stream
+
+}
+
+startCamera()
+
+
+const ipd = document.getElementById("ipd")
+const zoom = document.getElementById("zoom")
+const dist = document.getElementById("dist")
+
+function updateLayout(){
+
+const offset = ipd.value
+
+leftVideo.style.transform =
+`translate(calc(-50% + ${offset}px),-50%)`
+
+rightVideo.style.transform =
+`translate(calc(-50% - ${offset}px),-50%)`
+
+const z = zoom.value
+
+leftVideo.style.height = z + "vh"
+rightVideo.style.height = z + "vh"
+
+}
+
+ipd.oninput = updateLayout
+zoom.oninput = updateLayout
+
+
+const ui = document.getElementById("ui")
+
+let uiTimeout
+
+function showUI(){
+
+ui.classList.add("visible")
+
+clearTimeout(uiTimeout)
+
+uiTimeout = setTimeout(()=>{
+ui.classList.remove("visible")
+},3000)
+
+}
+
+document.body.addEventListener("tap",showUI)
+document.body.addEventListener("click",showUI)
+
+
+document.getElementById("gyro").onclick = async ()=>{
+
+if (typeof DeviceOrientationEvent !== "undefined"
+ && typeof DeviceOrientationEvent.requestPermission === "function"){
+
+await DeviceOrientationEvent.requestPermission()
+
+}
+
+window.addEventListener("deviceorientation",e=>{
+
+const tilt = e.gamma
+
+leftVideo.style.rotate = tilt+"deg"
+rightVideo.style.rotate = tilt+"deg"
+
+})
+
+}
+
+
+showUI()
+
+</script>
+
+</body>
+</html>

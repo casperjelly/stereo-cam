@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+
+body{
+margin:0;
+background:black;
+font-family:sans-serif;
+overflow:hidden;
+}
+
+video{
+
+position:fixed;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+height:120vh;
+
+filter:
+contrast(1.4)
+brightness(1.2)
+saturate(1.1);
+
+}
+
+#controls{
+
+position:fixed;
+bottom:0;
+left:0;
+right:0;
+
+background:rgba(0,0,0,0.8);
+color:white;
+
+padding:15px;
+font-size:16px;
+
+}
+
+label{
+display:block;
+margin-top:8px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<video id="cam" autoplay playsinline></video>
+
+<div id="controls">
+
+<label>
+Zoom
+<input id="zoom" type="range" min="100" max="500" value="120">
+</label>
+
+<label>
+Contrast
+<input id="contrast" type="range" min="100" max="300" value="140">
+</label>
+
+<label>
+Brightness
+<input id="bright" type="range" min="100" max="200" value="120">
+</label>
+
+<button id="torch">Toggle Light</button>
+
+</div>
+
+<script>
+
+const video = document.getElementById("cam")
+
+let stream
+let track
+
+async function start(){
+
+stream = await navigator.mediaDevices.getUserMedia({
+
+video:{
+facingMode:"environment",
+width:{ideal:1920},
+height:{ideal:1080}
+},
+
+audio:false
+
+})
+
+video.srcObject = stream
+
+track = stream.getVideoTracks()[0]
+
+}
+
+start()
+
+
+const zoom = document.getElementById("zoom")
+const contrast = document.getElementById("contrast")
+const bright = document.getElementById("bright")
+
+function update(){
+
+video.style.height = zoom.value + "vh"
+
+video.style.filter =
+`contrast(${contrast.value/100})
+brightness(${bright.value/100})
+saturate(1.1)`
+
+}
+
+zoom.oninput = update
+contrast.oninput = update
+bright.oninput = update
+
+
+document.getElementById("torch").onclick = async ()=>{
+
+try{
+
+const capabilities = track.getCapabilities()
+
+if(capabilities.torch){
+
+await track.applyConstraints({
+
+advanced:[{torch:true}]
+
+})
+
+}
+
+}catch(e){}
+
+}
+
+</script>
+
+</body>
+</html>

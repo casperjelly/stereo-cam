@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+
+body{
+margin:0;
+background:black;
+overflow:hidden;
+}
+
+video,canvas{
+
+position:fixed;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+height:120vh;
+
+}
+
+#controls{
+
+position:fixed;
+bottom:0;
+left:0;
+right:0;
+
+background:rgba(0,0,0,0.8);
+color:white;
+padding:15px;
+font-family:sans-serif;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<video id="video" autoplay playsinline style="display:none"></video>
+<canvas id="canvas"></canvas>
+
+<div id="controls">
+Edge strength
+<input id="strength" type="range" min="1" max="5" value="2">
+</div>
+
+<script>
+
+const video = document.getElementById("video")
+const canvas = document.getElementById("canvas")
+const ctx = canvas.getContext("2d")
+
+let strength = 2
+
+document.getElementById("strength").oninput = e=>{
+strength = e.target.value
+}
+
+async function start(){
+
+const stream = await navigator.mediaDevices.getUserMedia({
+
+video:{facingMode:"environment"},
+audio:false
+
+})
+
+video.srcObject = stream
+
+video.onloadedmetadata=()=>{
+
+canvas.width = video.videoWidth
+canvas.height = video.videoHeight
+
+requestAnimationFrame(draw)
+
+}
+
+}
+
+start()
+
+function draw(){
+
+ctx.drawImage(video,0,0,canvas.width,canvas.height)
+
+let img = ctx.getImageData(0,0,canvas.width,canvas.height)
+let d = img.data
+
+for(let i=0;i<d.length;i+=4){
+
+let avg=(d[i]+d[i+1]+d[i+2])/3
+
+let edge = avg>128 ? 255 : 0
+
+edge *= strength
+
+d[i]=edge
+d[i+1]=edge
+d[i+2]=edge
+
+}
+
+ctx.putImageData(img,0,0)
+
+requestAnimationFrame(draw)
+
+}
+
+</script>
+
+</body>
+</html>

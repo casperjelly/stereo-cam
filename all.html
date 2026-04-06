@@ -11,7 +11,7 @@ body{
 margin:0;
 background:black;
 overflow:hidden;
-font-family:-apple-system, system-ui, sans-serif;
+font-family:-apple-system,system-ui,sans-serif;
 }
 
 /* camera container */
@@ -22,26 +22,30 @@ top:0;
 left:0;
 right:0;
 bottom:0;
-display:block;
 }
 
-/* eyes */
+/* eye containers */
 
 .eye{
 position:absolute;
 top:0;
 bottom:0;
-width:50%;
 overflow:hidden;
-padding-left:4vw;
-padding-right:4vw;
 box-sizing:border-box;
 }
 
-#leftEye{ left:0; }
-#rightEye{ right:0; display:none; }
+#leftEye{
+left:0;
+width:100%;
+}
 
-/* camera video */
+#rightEye{
+right:0;
+width:50%;
+display:none;
+}
+
+/* video */
 
 video{
 position:absolute;
@@ -62,11 +66,11 @@ left:0;
 right:0;
 background:rgba(0,0,0,0.7);
 padding:20px;
+color:white;
 }
 
-#zoom{
+#zoomBar input[type=range]{
 width:100%;
-height:40px;
 }
 
 /* menu button */
@@ -99,7 +103,7 @@ color:white;
 display:none;
 }
 
-/* large spaced buttons */
+/* buttons */
 
 .menuButton{
 position:absolute;
@@ -111,20 +115,27 @@ background:#2c7be5;
 color:white;
 }
 
-/* corners */
-
 #vrToggle{ top:40px; left:40px; }
-#distToggle{ top:40px; right:40px; }
-
 #contrastToggle{ bottom:40px; left:40px; }
 #closeMenu{ bottom:40px; right:40px; background:#aa3333; }
 
-/* centre */
+/* IPD control */
 
-#reset{
-top:50%;
-left:50%;
-transform:translate(-50%,-50%);
+#ipdBox{
+position:absolute;
+top:40px;
+right:40px;
+width:220px;
+}
+
+#ipdBox input{
+width:100%;
+}
+
+#ipdValue{
+width:80px;
+font-size:18px;
+margin-top:10px;
 }
 
 </style>
@@ -148,18 +159,29 @@ transform:translate(-50%,-50%);
 <div id="menuButton">☰</div>
 
 <div id="zoomBar">
+
+<label>Zoom</label>
 <input id="zoom" type="range" min="150" max="400" value="200">
+
+<input id="zoomValue" type="number" min="150" max="400" value="200">
+
 </div>
 
 <div id="menu">
 
 <button id="vrToggle" class="menuButton">VR Mode OFF</button>
 
-<button id="distToggle" class="menuButton">Lens Distortion OFF</button>
+<div id="ipdBox">
+
+<label>IPD (mm)</label>
+
+<input id="ipd" type="range" min="50" max="75" value="63">
+
+<input id="ipdValue" type="number" min="50" max="75" value="63">
+
+</div>
 
 <button id="contrastToggle" class="menuButton">High Contrast ON</button>
-
-<button id="reset" class="menuButton">Reset View</button>
 
 <button id="closeMenu" class="menuButton">Close ✕</button>
 
@@ -167,19 +189,18 @@ transform:translate(-50%,-50%);
 
 <script>
 
-const leftVideo = document.getElementById("leftVideo")
-const rightVideo = document.getElementById("rightVideo")
+const leftVideo=document.getElementById("leftVideo")
+const rightVideo=document.getElementById("rightVideo")
 
-const leftEye = document.getElementById("leftEye")
-const rightEye = document.getElementById("rightEye")
+const leftEye=document.getElementById("leftEye")
+const rightEye=document.getElementById("rightEye")
 
-let vrMode = false
-let distortion = false
-let contrast = true
+let vrMode=false
+let contrast=true
 
 async function startCamera(){
 
-const stream = await navigator.mediaDevices.getUserMedia({
+const stream=await navigator.mediaDevices.getUserMedia({
 
 video:{
 facingMode:{ideal:"environment"},
@@ -192,8 +213,8 @@ audio:false
 
 })
 
-leftVideo.srcObject = stream
-rightVideo.srcObject = stream
+leftVideo.srcObject=stream
+rightVideo.srcObject=stream
 
 }
 
@@ -201,20 +222,28 @@ startCamera()
 
 /* zoom */
 
-const zoom = document.getElementById("zoom")
+const zoom=document.getElementById("zoom")
+const zoomValue=document.getElementById("zoomValue")
 
-zoom.oninput=()=>{
+function applyZoom(v){
 
-const size = zoom.value + "vh"
+const size=v+"vh"
 
-leftVideo.style.height = size
-rightVideo.style.height = size
+leftVideo.style.height=size
+rightVideo.style.height=size
+
+zoom.value=v
+zoomValue.value=v
 
 }
 
+zoom.oninput=()=>applyZoom(zoom.value)
+
+zoomValue.oninput=()=>applyZoom(zoomValue.value)
+
 /* menu */
 
-const menu = document.getElementById("menu")
+const menu=document.getElementById("menu")
 
 document.getElementById("menuButton").onclick=()=>{
 menu.style.display="block"
@@ -234,9 +263,10 @@ if(vrMode){
 
 rightEye.style.display="block"
 leftEye.style.width="50%"
-rightEye.style.width="50%"
 
 this.textContent="VR Mode ON"
+
+applyIPD(ipd.value)
 
 }else{
 
@@ -244,31 +274,6 @@ rightEye.style.display="none"
 leftEye.style.width="100%"
 
 this.textContent="VR Mode OFF"
-
-}
-
-}
-
-/* distortion */
-
-document.getElementById("distToggle").onclick=function(){
-
-distortion=!distortion
-
-if(distortion){
-
-leftVideo.style.borderRadius="40%"
-rightVideo.style.borderRadius="40%"
-
-this.textContent="Lens Distortion ON"
-
-}else{
-
-leftVideo.style.borderRadius="0"
-
-rightVideo.style.borderRadius="0"
-
-this.textContent="Lens Distortion OFF"
 
 }
 
@@ -298,16 +303,29 @@ this.textContent="High Contrast OFF"
 
 }
 
-/* reset */
+/* IPD */
 
-document.getElementById("reset").onclick=()=>{
+const ipd=document.getElementById("ipd")
+const ipdValue=document.getElementById("ipdValue")
 
-zoom.value=200
+function applyIPD(v){
 
-leftVideo.style.height="200vh"
-rightVideo.style.height="200vh"
+ipd.value=v
+ipdValue.value=v
+
+const offset=(v-63)*0.5
+
+leftVideo.style.transform=
+`translate(calc(-50% - ${offset}px),-50%)`
+
+rightVideo.style.transform=
+`translate(calc(-50% + ${offset}px),-50%)`
 
 }
+
+ipd.oninput=()=>applyIPD(ipd.value)
+
+ipdValue.oninput=()=>applyIPD(ipdValue.value)
 
 </script>
 

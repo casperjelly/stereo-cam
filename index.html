@@ -1,60 +1,114 @@
+<!DOCTYPE html>
+<html>
 <head>
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
-<title>Vision Tools</title>
-
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Vision Tools">
 
 <style>
 
-body{
+*{
 margin:0;
-font-family:-apple-system, system-ui, sans-serif;
-background:#111;
+padding:0;
+box-sizing:border-box;
+user-select:none;
+-webkit-user-select:none;
+-webkit-touch-callout:none;
+}
+
+body{
+background:black;
+overflow:hidden;
+font-family:-apple-system,system-ui,sans-serif;
+}
+
+/* camera */
+
+#view{
+position:fixed;
+top:0;
+left:0;
+right:0;
+bottom:0;
+overflow:hidden;
+}
+
+video{
+position:absolute;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+height:200vh;
+width:auto;
+filter:contrast(1.35) brightness(1.25);
+}
+
+/* menu button */
+
+#menuButton{
+position:fixed;
+top:20px;
+right:20px;
+width:60px;
+height:60px;
+border-radius:12px;
+background:rgba(0,0,0,0.6);
 color:white;
-text-align:center;
-padding:25px;
+font-size:28px;
+display:flex;
+align-items:center;
+justify-content:center;
 }
 
-h1{
-font-size:32px;
-margin-bottom:10px;
+/* menu */
+
+#menu{
+position:fixed;
+top:0;
+left:0;
+right:0;
+bottom:0;
+background:black;
+display:none;
 }
 
-p{
-opacity:0.8;
-margin-bottom:30px;
+/* magnification buttons */
+
+#levels{
+position:absolute;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+display:flex;
+gap:12px;
+padding:20px;
 }
 
-button{
+.level{
+width:60px;
+height:120px;
+background:white;
+border-radius:10px;
+}
 
-display:block;
-width:100%;
-max-width:420px;
+/* selected */
 
-margin:14px auto;
-padding:22px;
+.level.active{
+background:#2c7be5;
+}
 
+/* close button */
+
+#closeMenu{
+position:absolute;
+bottom:40px;
+right:40px;
+padding:20px 30px;
 font-size:22px;
-font-weight:600;
-
+background:#aa3333;
+color:white;
 border:none;
 border-radius:14px;
-
-background:#2c7be5;
-color:white;
-
-}
-
-button.secondary{
-background:#444;
-}
-
-button:hover{
-background:#1b5bbf;
 }
 
 </style>
@@ -63,37 +117,87 @@ background:#1b5bbf;
 
 <body>
 
-<h1>Vision Tools</h1>
+<div id="view">
+<video id="camera" autoplay playsinline></video>
+</div>
 
-<p>Select a mode to try</p>
+<div id="menuButton">☰</div>
 
-<button onclick="location.href='all.html'">
-All
-</button>
+<div id="menu">
 
-<button onclick="location.href='mag.html'">
-Magnifier
-</button>
+<div id="levels"></div>
 
-<button onclick="location.href='edge.html'">
-Edge Vision
-</button>
+<button id="closeMenu">Close ✕</button>
 
-<button onclick="location.href='bino.html'">
-Binoculars
-</button>
+</div>
 
-<button onclick="location.href='v3.html'">
-VR Viewer (Cardboard)
-</button>
+<script>
 
-<button class="secondary" onclick="location.href='v1.html'">
-VR Test v1
-</button>
+const video=document.getElementById("camera")
 
-<button class="secondary" onclick="location.href='v2.html'">
-VR Test v2
-</button>
+async function startCamera(){
+
+const stream=await navigator.mediaDevices.getUserMedia({
+
+video:{
+facingMode:{ideal:"environment"},
+width:{ideal:1920},
+height:{ideal:1080},
+focusMode:"continuous"
+},
+
+audio:false
+
+})
+
+video.srcObject=stream
+
+}
+
+startCamera()
+
+/* zoom levels */
+
+const levels=document.getElementById("levels")
+
+const zoomValues=[150,170,190,210,230,260,290,320,360,400]
+
+zoomValues.forEach((z,i)=>{
+
+const b=document.createElement("div")
+
+b.className="level"
+
+b.onclick=()=>{
+
+document.querySelectorAll(".level").forEach((el,index)=>{
+
+if(index<=i) el.classList.add("active")
+else el.classList.remove("active")
+
+})
+
+video.style.height=z+"vh"
+
+}
+
+levels.appendChild(b)
+
+})
+
+/* menu */
+
+const menu=document.getElementById("menu")
+
+document.getElementById("menuButton").onclick=()=>{
+menu.style.display="block"
+}
+
+document.getElementById("closeMenu").onclick=()=>{
+menu.style.display="none"
+}
+
+</script>
 
 </body>
 </html>

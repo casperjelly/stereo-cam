@@ -45,31 +45,25 @@ image-rendering:-webkit-optimize-contrast;
 filter:contrast(1.35) brightness(1.2);
 }
 
-/* menu toggle */
+/* options / resume button */
 
 #menuButton{
 position:fixed;
 top:3vh;
 right:3vw;
-width:12vw;
-height:10vw;
-max-width:120px;
-max-height:90px;
-border-radius:2vw;
+padding:2vh 3vw;
+font-size:4vw;
+border-radius:1vw;
+border:none;
 background:rgba(0,0,0,0.6);
 color:white;
-font-size:4vw;
-display:flex;
-align-items:center;
-justify-content:center;
+font-weight:bold;
 z-index:10;
+display:none;
 }
-
-/* resume style */
 
 .resume{
 background:#1faa3c !important;
-color:white;
 }
 
 /* menu */
@@ -156,7 +150,7 @@ border-radius:1vw;
 <video id="camera" autoplay playsinline></video>
 </div>
 
-<div id="menuButton">☰</div>
+<button id="menuButton">Options</button>
 
 <div id="menu">
 
@@ -183,11 +177,27 @@ const video=document.getElementById("camera")
 const menu=document.getElementById("menu")
 const menuButton=document.getElementById("menuButton")
 const modeSelect=document.getElementById("modeSelect")
+const reloadButton=document.getElementById("reloadButton")
 
 let mode="normal"
 let dynamicBrightness=1.2
 
-/* start camera */
+/* speech */
+
+function speak(text){
+
+const msg=new SpeechSynthesisUtterance(text)
+
+msg.rate=0.9
+msg.pitch=1
+msg.volume=1
+
+speechSynthesis.cancel()
+speechSynthesis.speak(msg)
+
+}
+
+/* camera */
 
 async function startCamera(){
 
@@ -227,13 +237,18 @@ else el.classList.remove("active")
 
 video.style.height=zoomValues[i]+"vh"
 
+speak("Zoom "+i)
+
 }
 
 zoomValues.forEach((z,i)=>{
 const b=document.createElement("div")
 b.className="level"
 b.textContent=i
-b.onclick=()=>setZoom(i)
+b.onclick=(e)=>{
+e.stopPropagation()
+setZoom(i)
+}
 levels.appendChild(b)
 })
 
@@ -266,6 +281,7 @@ video.style.filter=filter
 
 modeSelect.onchange=()=>{
 mode=modeSelect.value
+speak(modeSelect.options[modeSelect.selectedIndex].text)
 applyFilters()
 }
 
@@ -309,15 +325,20 @@ setInterval(analyseBrightness,500)
 
 /* menu toggle */
 
-menuButton.onclick=()=>{
+menuButton.onclick=(e)=>{
+
+e.stopPropagation()
 
 const open=menu.style.display==="block"
 
 if(open){
 
 menu.style.display="none"
-menuButton.textContent="☰"
+menuButton.textContent="Options"
 menuButton.classList.remove("resume")
+menuButton.style.display="none"
+
+speak("Resume camera view")
 
 }else{
 
@@ -325,23 +346,36 @@ menu.style.display="block"
 menuButton.textContent="Resume"
 menuButton.classList.add("resume")
 
-}
+speak("Options menu")
 
 }
 
-/* reload button */
+}
 
-document.getElementById("reloadButton").onclick=()=>{
+/* reload */
+
+reloadButton.onclick=(e)=>{
+
+e.stopPropagation()
+
+speak("Reloading app")
 
 const url=new URL(window.location.href)
-
 url.searchParams.set("reload",Date.now())
-
 window.location.href=url.toString()
 
 }
 
-/* block gesture zoom */
+/* reveal options button on tap */
+
+document.body.addEventListener("click",()=>{
+
+if(menu.style.display!=="block")
+menuButton.style.display="block"
+
+})
+
+/* block gestures */
 
 ["gesturestart","gesturechange","gestureend"].forEach(e=>{
 document.addEventListener(e,function(ev){ev.preventDefault()})

@@ -41,11 +41,9 @@ left:50%;
 transform:translate(-50%,-50%);
 height:100vh;
 width:auto;
-image-rendering:-webkit-optimize-contrast;
-filter:contrast(1.35) brightness(1.2);
 }
 
-/* options / resume button */
+/* options */
 
 #menuButton{
 position:fixed;
@@ -55,15 +53,11 @@ padding:2vh 3vw;
 font-size:4vw;
 border-radius:1vw;
 border:none;
-background:rgba(0,0,0,0.6);
+background:#1faa3c;
 color:white;
 font-weight:bold;
 z-index:10;
 display:none;
-}
-
-.resume{
-background:#1faa3c !important;
 }
 
 /* menu */
@@ -107,7 +101,7 @@ background:#2c7be5;
 color:white;
 }
 
-/* reload button */
+/* bottom buttons */
 
 #reloadButton{
 position:absolute;
@@ -122,23 +116,28 @@ color:white;
 font-weight:bold;
 }
 
-/* mode selector */
+#contrastButton{
+position:absolute;
+bottom:4vh;
+left:50%;
+transform:translateX(-50%);
+padding:2vh 3vw;
+font-size:4vw;
+border-radius:1vw;
+border:none;
+background:#7a3fd1;
+color:white;
+font-weight:bold;
+}
 
-#modeRow{
+#modeSelect{
 position:absolute;
 bottom:4vh;
 right:3vw;
-display:flex;
-align-items:center;
-gap:2vw;
-color:white;
-font-size:4vw;
-}
-
-select{
 font-size:4vw;
 padding:1.5vh 2vw;
 border-radius:1vw;
+border:5px solid orange;
 }
 
 </style>
@@ -155,19 +154,15 @@ border-radius:1vw;
 <div id="menu">
 
 <button id="reloadButton">Reload</button>
+<button id="contrastButton">High contrast: OFF</button>
 
 <div id="levels"></div>
 
-<div id="modeRow">
-<div>Mode:</div>
 <select id="modeSelect">
 <option value="normal">Default</option>
 <option value="invert">Invert</option>
 <option value="mono">Mono</option>
-<option value="contrast1">Contrast 1</option>
-<option value="contrast2">Contrast 2</option>
 </select>
-</div>
 
 </div>
 
@@ -178,8 +173,10 @@ const menu=document.getElementById("menu")
 const menuButton=document.getElementById("menuButton")
 const modeSelect=document.getElementById("modeSelect")
 const reloadButton=document.getElementById("reloadButton")
+const contrastButton=document.getElementById("contrastButton")
 
 let mode="normal"
+let highContrast=false
 let dynamicBrightness=1.2
 
 /* speech */
@@ -201,6 +198,8 @@ speechSynthesis.speak(msg)
 
 async function startCamera(){
 
+try{
+
 const stream=await navigator.mediaDevices.getUserMedia({
 
 video:{
@@ -218,6 +217,18 @@ audio:false
 
 video.srcObject=stream
 
+speak("Camera ready")
+
+stream.getVideoTracks()[0].addEventListener("ended",()=>{
+speak("Camera stopped. Please reopen the app.")
+})
+
+}catch(err){
+
+speak("Camera access denied")
+
+}
+
 }
 
 startCamera()
@@ -225,7 +236,6 @@ startCamera()
 /* zoom */
 
 const zoomValues=[100,115,130,150,175,200,230,260,300,340,380]
-
 const levels=document.getElementById("levels")
 
 function setZoom(i){
@@ -258,22 +268,15 @@ setZoom(0)
 
 function applyFilters(){
 
-let filter=""
+let contrastLevel=highContrast?3.2:1.35
 
-if(mode==="normal")
-filter=`contrast(1.35) brightness(${dynamicBrightness})`
+let filter=`contrast(${contrastLevel}) brightness(${dynamicBrightness})`
 
 if(mode==="invert")
-filter=`invert(1) contrast(1.35) brightness(${dynamicBrightness})`
+filter=`invert(1) `+filter
 
 if(mode==="mono")
-filter=`grayscale(1) contrast(1.5) brightness(${dynamicBrightness})`
-
-if(mode==="contrast1")
-filter=`contrast(2.4) brightness(${dynamicBrightness+0.15})`
-
-if(mode==="contrast2")
-filter=`grayscale(0.4) contrast(3.0) brightness(${dynamicBrightness+0.2})`
+filter=`grayscale(1) `+filter
 
 video.style.filter=filter
 
@@ -281,11 +284,27 @@ video.style.filter=filter
 
 modeSelect.onchange=()=>{
 mode=modeSelect.value
-speak(modeSelect.options[modeSelect.selectedIndex].text)
+speak(modeSelect.options[modeSelect.selectedIndex].text+" mode")
 applyFilters()
 }
 
-/* brightness detection */
+/* contrast toggle */
+
+contrastButton.onclick=(e)=>{
+
+e.stopPropagation()
+
+highContrast=!highContrast
+
+contrastButton.textContent="High contrast: "+(highContrast?"ON":"OFF")
+
+speak("High contrast "+(highContrast?"on":"off"))
+
+applyFilters()
+
+}
+
+/* brightness */
 
 const probeCanvas=document.createElement("canvas")
 const probeCtx=probeCanvas.getContext("2d")
@@ -335,7 +354,6 @@ if(open){
 
 menu.style.display="none"
 menuButton.textContent="Options"
-menuButton.classList.remove("resume")
 menuButton.style.display="none"
 
 speak("Resume camera view")
@@ -344,7 +362,6 @@ speak("Resume camera view")
 
 menu.style.display="block"
 menuButton.textContent="Resume"
-menuButton.classList.add("resume")
 
 speak("Options menu")
 
@@ -358,15 +375,19 @@ reloadButton.onclick=(e)=>{
 
 e.stopPropagation()
 
-speak("Reloading app")
+speak("Reloading app in three seconds")
+
+setTimeout(()=>{
 
 const url=new URL(window.location.href)
 url.searchParams.set("reload",Date.now())
 window.location.href=url.toString()
 
+},3000)
+
 }
 
-/* reveal options button on tap */
+/* reveal options */
 
 document.body.addEventListener("click",()=>{
 

@@ -100,8 +100,6 @@ right:0;
 bottom:0;
 background:black;
 display:none;
-
-display:flex;
 align-items:center;
 justify-content:center;
 padding:8vw;
@@ -170,12 +168,13 @@ font-size:4vw;
 border-radius:1vw;
 border:none;
 background:#3e1c73;
-color:white;
+color:#bbb;
 font-weight:bold;
 }
 
 #contrastButton.high{
 background:#7a3fd1;
+color:white;
 }
 
 /* MODE */
@@ -187,7 +186,7 @@ right:3vw;
 font-size:4vw;
 padding:1.5vh 2vw;
 border-radius:1vw;
-border:5px solid yellow;
+border:none;
 background:#00695c;
 color:white;
 }
@@ -207,7 +206,7 @@ color:white;
 <div id="menu">
 
 <button id="reloadButton">RELOAD</button>
-<button id="contrastButton">HI CONTRAST</button>
+<button id="contrastButton">CONTRAST</button>
 
 <div id="levels"></div>
 
@@ -228,6 +227,8 @@ color:white;
 <p>This viewer uses your device camera to enlarge and enhance the live view in front of you.</p>
 
 <p>Modes such as invert, monochrome and high contrast may help make text, objects or signs easier to see.</p>
+
+<br>
 
 <p><b>IMPORTANT</b></p>
 
@@ -253,17 +254,17 @@ const modeSelect=document.getElementById("modeSelect")
 const reloadButton=document.getElementById("reloadButton")
 const contrastButton=document.getElementById("contrastButton")
 
+let videoTrack=null
+
 let mode="normal"
 let highContrast=false
 let dynamicBrightness=1.2
 
 function speak(text){
-
 const msg=new SpeechSynthesisUtterance(text)
 msg.rate=0.9
 speechSynthesis.cancel()
 speechSynthesis.speak(msg)
-
 }
 
 /* CAMERA */
@@ -276,7 +277,7 @@ const stream=await navigator.mediaDevices.getUserMedia({
 
 video:{
 facingMode:{ ideal:"environment" },
-frameRate:{ ideal:30,max:30 }
+frameRate:{ ideal:24,max:24 }
 },
 
 audio:false
@@ -284,10 +285,11 @@ audio:false
 })
 
 video.srcObject=stream
+videoTrack=stream.getVideoTracks()[0]
 
 speak("Camera ready")
 
-stream.getVideoTracks()[0].addEventListener("ended",()=>{
+videoTrack.addEventListener("ended",()=>{
 speak("Camera stopped. Please reopen the app.")
 })
 
@@ -300,6 +302,14 @@ speak("Camera access denied")
 }
 
 startCamera()
+
+function pauseCamera(){
+if(videoTrack) videoTrack.enabled=false
+}
+
+function resumeCamera(){
+if(videoTrack) videoTrack.enabled=true
+}
 
 /* ZOOM */
 
@@ -373,6 +383,8 @@ const ctx=canvas.getContext("2d")
 canvas.width=32
 canvas.height=32
 
+let lastBrightness=0
+
 function analyseBrightness(){
 
 if(video.readyState<2) return
@@ -388,13 +400,17 @@ total+=(d[i]*0.2126+d[i+1]*0.7152+d[i+2]*0.0722)
 
 let avg=total/(d.length/4)
 
+if(Math.abs(avg-lastBrightness)<10) return
+
+lastBrightness=avg
+
 dynamicBrightness=avg<80?1.5:1.2
 
 applyFilters()
 
 }
 
-setInterval(analyseBrightness,1200)
+setInterval(analyseBrightness,3000)
 
 /* OPTIONS */
 
@@ -409,6 +425,8 @@ if(open){
 menu.style.display="none"
 menuButton.textContent="OPTIONS"
 
+resumeCamera()
+
 menuButton.style.display="none"
 infoButton.style.display="none"
 
@@ -420,6 +438,8 @@ menu.style.display="block"
 menuButton.textContent="RESUME"
 
 infoButton.style.display="none"
+
+pauseCamera()
 
 speak("Options menu")
 
@@ -440,6 +460,8 @@ if(open){
 infoPanel.style.display="none"
 infoButton.textContent="INFO"
 
+resumeCamera()
+
 menuButton.style.display="block"
 
 }else{
@@ -448,6 +470,8 @@ infoPanel.style.display="flex"
 infoButton.textContent="CLOSE"
 
 menuButton.style.display="none"
+
+pauseCamera()
 
 }
 

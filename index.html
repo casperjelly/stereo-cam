@@ -37,11 +37,11 @@ overflow:hidden;
 
 video{
 position:absolute;
-top:50%;
-left:50%;
-transform:translate(-50%,-50%);
+top:0;
+left:0;
+width:100vw;
 height:100vh;
-width:auto;
+object-fit:cover;
 }
 
 /* OPTIONS */
@@ -323,7 +323,7 @@ document.querySelectorAll(".level").forEach((el,index)=>{
 el.classList.toggle("active",index<=i)
 })
 
-video.style.height=zoomValues[i]+"vh"
+video.style.transform=`scale(${zoomValues[i]/100})`
 
 speak("Zoom "+i)
 

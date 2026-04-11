@@ -21,6 +21,7 @@ body{
 background:black;
 overflow:hidden;
 font-family:-apple-system,system-ui,sans-serif;
+color:white;
 }
 
 /* camera */
@@ -43,7 +44,7 @@ height:100vh;
 width:auto;
 }
 
-/* options */
+/* OPTIONS */
 
 #menuButton{
 position:fixed;
@@ -60,7 +61,24 @@ z-index:10;
 display:none;
 }
 
-/* menu */
+/* INFO */
+
+#infoButton{
+position:fixed;
+bottom:4vh;
+left:3vw;
+padding:2vh 3vw;
+font-size:4vw;
+border-radius:1vw;
+border:none;
+background:#c62828;
+color:white;
+font-weight:bold;
+display:none;
+z-index:10;
+}
+
+/* MENU PANEL */
 
 #menu{
 position:fixed;
@@ -72,7 +90,27 @@ background:black;
 display:none;
 }
 
-/* zoom buttons */
+/* INFO PANEL */
+
+#infoPanel{
+position:fixed;
+top:0;
+left:0;
+right:0;
+bottom:0;
+background:black;
+padding:6vw;
+display:none;
+overflow:auto;
+}
+
+#infoPanel p{
+font-size:4vw;
+line-height:1.5;
+margin-bottom:4vw;
+}
+
+/* ZOOM BUTTONS */
 
 #levels{
 position:absolute;
@@ -86,22 +124,22 @@ gap:1vw;
 
 .level{
 flex:1;
-height:20vh;
-background:white;
+aspect-ratio:1;
+background:#444;
 border-radius:1vw;
 display:flex;
 align-items:center;
 justify-content:center;
-font-size:5vw;
+font-size:4vw;
 font-weight:bold;
+color:white;
 }
 
 .level.active{
 background:#2c7be5;
-color:white;
 }
 
-/* bottom buttons */
+/* RELOAD */
 
 #reloadButton{
 position:absolute;
@@ -115,6 +153,8 @@ background:#d92c2c;
 color:white;
 font-weight:bold;
 }
+
+/* CONTRAST */
 
 #contrastButton{
 position:absolute;
@@ -130,6 +170,8 @@ color:white;
 font-weight:bold;
 }
 
+/* MODE */
+
 #modeSelect{
 position:absolute;
 bottom:4vh;
@@ -138,6 +180,8 @@ font-size:4vw;
 padding:1.5vh 2vw;
 border-radius:1vw;
 border:5px solid orange;
+background:#333;
+color:white;
 }
 
 </style>
@@ -149,20 +193,39 @@ border:5px solid orange;
 <video id="camera" autoplay playsinline></video>
 </div>
 
-<button id="menuButton">Options</button>
+<button id="menuButton">OPTIONS</button>
+<button id="infoButton">INFO</button>
 
 <div id="menu">
 
-<button id="reloadButton">Reload</button>
-<button id="contrastButton">High contrast: OFF</button>
+<button id="reloadButton">RELOAD</button>
+<button id="contrastButton">CONTRAST: NORM</button>
 
 <div id="levels"></div>
 
 <select id="modeSelect">
-<option value="normal">Default</option>
-<option value="invert">Invert</option>
-<option value="mono">Mono</option>
+<option value="normal">DEFAULT</option>
+<option value="invert">INVERT</option>
+<option value="mono">MONO</option>
 </select>
+
+</div>
+
+<div id="infoPanel">
+
+<p><b>VISUAL VIEWER</b></p>
+
+<p>This viewer uses your device camera to enlarge and enhance the live view in front of you.</p>
+
+<p>Modes such as invert, monochrome and high contrast may make objects, text or signs easier to see.</p>
+
+<p><b>IMPORTANT</b></p>
+
+<p>This viewer is intended as a visual aid only.</p>
+
+<p>It is not designed or certified to function as a mobility aid and must not be relied upon for navigation, crossing roads, avoiding hazards or any safety-critical activity.</p>
+
+<p>Always use appropriate mobility aids, assistance or guidance when required.</p>
 
 </div>
 
@@ -171,6 +234,8 @@ border:5px solid orange;
 const video=document.getElementById("camera")
 const menu=document.getElementById("menu")
 const menuButton=document.getElementById("menuButton")
+const infoButton=document.getElementById("infoButton")
+const infoPanel=document.getElementById("infoPanel")
 const modeSelect=document.getElementById("modeSelect")
 const reloadButton=document.getElementById("reloadButton")
 const contrastButton=document.getElementById("contrastButton")
@@ -179,22 +244,17 @@ let mode="normal"
 let highContrast=false
 let dynamicBrightness=1.2
 
-/* speech */
-
 function speak(text){
 
 const msg=new SpeechSynthesisUtterance(text)
-
 msg.rate=0.9
-msg.pitch=1
-msg.volume=1
 
 speechSynthesis.cancel()
 speechSynthesis.speak(msg)
 
 }
 
-/* camera */
+/* CAMERA */
 
 async function startCamera(){
 
@@ -204,11 +264,7 @@ const stream=await navigator.mediaDevices.getUserMedia({
 
 video:{
 facingMode:{ ideal:"environment" },
-width:{ ideal:3840 },
-height:{ ideal:2160 },
-frameRate:{ ideal:30, max:30 },
-focusMode:"continuous",
-stabilizationMode:"continuous"
+frameRate:{ ideal:30,max:30 }
 },
 
 audio:false
@@ -223,7 +279,7 @@ stream.getVideoTracks()[0].addEventListener("ended",()=>{
 speak("Camera stopped. Please reopen the app.")
 })
 
-}catch(err){
+}catch{
 
 speak("Camera access denied")
 
@@ -233,7 +289,7 @@ speak("Camera access denied")
 
 startCamera()
 
-/* zoom */
+/* ZOOM */
 
 const zoomValues=[100,115,130,150,175,200,230,260,300,340,380]
 const levels=document.getElementById("levels")
@@ -241,8 +297,7 @@ const levels=document.getElementById("levels")
 function setZoom(i){
 
 document.querySelectorAll(".level").forEach((el,index)=>{
-if(index<=i) el.classList.add("active")
-else el.classList.remove("active")
+el.classList.toggle("active",index<=i)
 })
 
 video.style.height=zoomValues[i]+"vh"
@@ -255,16 +310,13 @@ zoomValues.forEach((z,i)=>{
 const b=document.createElement("div")
 b.className="level"
 b.textContent=i
-b.onclick=(e)=>{
-e.stopPropagation()
-setZoom(i)
-}
+b.onclick=(e)=>{e.stopPropagation();setZoom(i)}
 levels.appendChild(b)
 })
 
 setZoom(0)
 
-/* filters */
+/* FILTERS */
 
 function applyFilters(){
 
@@ -272,11 +324,8 @@ let contrastLevel=highContrast?3.2:1.35
 
 let filter=`contrast(${contrastLevel}) brightness(${dynamicBrightness})`
 
-if(mode==="invert")
-filter=`invert(1) `+filter
-
-if(mode==="mono")
-filter=`grayscale(1) `+filter
+if(mode==="invert") filter="invert(1) "+filter
+if(mode==="mono") filter="grayscale(1) "+filter
 
 video.style.filter=filter
 
@@ -288,7 +337,7 @@ speak(modeSelect.options[modeSelect.selectedIndex].text+" mode")
 applyFilters()
 }
 
-/* contrast toggle */
+/* CONTRAST */
 
 contrastButton.onclick=(e)=>{
 
@@ -296,53 +345,46 @@ e.stopPropagation()
 
 highContrast=!highContrast
 
-contrastButton.textContent="High contrast: "+(highContrast?"ON":"OFF")
+contrastButton.textContent=highContrast?"CONTRAST: HIGH":"CONTRAST: NORM"
 
-speak("High contrast "+(highContrast?"on":"off"))
+speak(highContrast?"High contrast on":"High contrast off")
 
 applyFilters()
 
 }
 
-/* brightness */
+/* BRIGHTNESS */
 
-const probeCanvas=document.createElement("canvas")
-const probeCtx=probeCanvas.getContext("2d")
+const canvas=document.createElement("canvas")
+const ctx=canvas.getContext("2d")
 
-probeCanvas.width=32
-probeCanvas.height=32
+canvas.width=32
+canvas.height=32
 
 function analyseBrightness(){
 
 if(video.readyState<2) return
 
-probeCtx.drawImage(video,0,0,32,32)
+ctx.drawImage(video,0,0,32,32)
 
-let data=probeCtx.getImageData(0,0,32,32).data
+let d=ctx.getImageData(0,0,32,32).data
 
 let total=0
 
-for(let i=0;i<data.length;i+=4){
+for(let i=0;i<d.length;i+=4)
+total+=(d[i]*0.2126+d[i+1]*0.7152+d[i+2]*0.0722)
 
-let luminance=(data[i]*0.2126)+(data[i+1]*0.7152)+(data[i+2]*0.0722)
-total+=luminance
+let avg=total/(d.length/4)
 
-}
-
-let avg=total/(data.length/4)
-
-if(avg<60) dynamicBrightness=1.6
-else if(avg<90) dynamicBrightness=1.4
-else if(avg<120) dynamicBrightness=1.3
-else dynamicBrightness=1.2
+dynamicBrightness=avg<80?1.5:1.2
 
 applyFilters()
 
 }
 
-setInterval(analyseBrightness,500)
+setInterval(analyseBrightness,1200)
 
-/* menu toggle */
+/* OPTIONS */
 
 menuButton.onclick=(e)=>{
 
@@ -353,15 +395,17 @@ const open=menu.style.display==="block"
 if(open){
 
 menu.style.display="none"
-menuButton.textContent="Options"
+menuButton.textContent="OPTIONS"
 menuButton.style.display="none"
+
+infoButton.style.display="none"
 
 speak("Resume camera view")
 
 }else{
 
 menu.style.display="block"
-menuButton.textContent="Resume"
+menuButton.textContent="RESUME"
 
 speak("Options menu")
 
@@ -369,7 +413,29 @@ speak("Options menu")
 
 }
 
-/* reload */
+/* INFO */
+
+infoButton.onclick=(e)=>{
+
+e.stopPropagation()
+
+const open=infoPanel.style.display==="block"
+
+if(open){
+
+infoPanel.style.display="none"
+infoButton.textContent="INFO"
+
+}else{
+
+infoPanel.style.display="block"
+infoButton.textContent="CLOSE"
+
+}
+
+}
+
+/* RELOAD */
 
 reloadButton.onclick=(e)=>{
 
@@ -387,22 +453,18 @@ window.location.href=url.toString()
 
 }
 
-/* reveal options */
+/* SHOW BUTTONS */
 
 document.body.addEventListener("click",()=>{
 
-if(menu.style.display!=="block")
+if(menu.style.display!=="block"){
+
 menuButton.style.display="block"
+infoButton.style.display="block"
+
+}
 
 })
-
-/* block gestures */
-
-["gesturestart","gesturechange","gestureend"].forEach(e=>{
-document.addEventListener(e,function(ev){ev.preventDefault()})
-})
-
-applyFilters()
 
 </script>
 

@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+user-select:none;
+-webkit-user-select:none;
+-webkit-touch-callout:none;
+touch-action:manipulation;
+}
+
+body{
+background:black;
+overflow:hidden;
+font-family:-apple-system,system-ui,sans-serif;
+color:white;
+}
+
+/* camera */
+
+#view{
+position:fixed;
+top:0;
+left:0;
+right:0;
+bottom:0;
+overflow:hidden;
+}
+
+video{
+position:absolute;
+top:0;
+left:0;
+width:100vw;
+height:100vh;
+object-fit:cover;
+}
+
+/* buttons */
+
+button, select{
+padding:2vh 3vw;
+font-size:4vw;
+border-radius:1vw;
+border:none;
+font-weight:bold;
+}
+
+/* top controls */
+
+#menuButton{
+position:fixed;
+top:3vh;
+right:3vw;
+background:#1faa3c;
+color:white;
+display:none;
+z-index:10;
+}
+
+#infoButton{
+position:fixed;
+top:3vh;
+left:3vw;
+background:#444;
+color:white;
+display:none;
+z-index:10;
+}
+
+/* panels */
+
+#menu{
+position:fixed;
+top:0;
+left:0;
+right:0;
+bottom:0;
+background:black;
+display:none;
+}
+
+#infoPanel{
+position:fixed;
+top:0;
+left:0;
+right:0;
+bottom:0;
+background:black;
+display:none;
+flex-direction:column;
+overflow-y:auto;
+padding:6vh 6vw;
+}
+
+#infoText{
+font-size:4vw;
+line-height:1.6;
+}
+
+/* zoom */
+
+#levels{
+position:absolute;
+top:45%;
+left:50%;
+transform:translate(-50%,-50%);
+width:95vw;
+display:flex;
+gap:1vw;
+}
+
+.level{
+flex:1;
+aspect-ratio:1;
+background:#444;
+border-radius:1vw;
+display:flex;
+align-items:center;
+justify-content:center;
+color:white;
+}
+
+.level.active{
+background:#2c7be5;
+}
+
+/* rows */
+
+.topRow, .bottomRow{
+position:absolute;
+width:100%;
+display:flex;
+justify-content:space-around;
+align-items:center;
+}
+
+.topRow{ top:10vh; }
+.bottomRow{ bottom:4vh; }
+
+/* colours */
+
+#audioButton{ background:#0ea5a5; color:white; }
+#audioButton.off{ background:#134e4a; color:#aaa; }
+
+#torchButton{ background:#b45309; color:white; }
+#torchButton.on{ background:#f59e0b; color:black; }
+
+#contrastButton{ background:#3e1c73; color:#bbb; }
+#contrastButton.high{ background:#7a3fd1; color:white; }
+
+#reloadButton{ background:#d92c2c; color:white; }
+
+#modeSelect{
+background:#00695c;
+color:white;
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="view">
+<video id="camera" autoplay playsinline></video>
+</div>
+
+<button id="menuButton">OPTIONS</button>
+<button id="infoButton">INFO</button>
+
+<div id="menu">
+
+<div class="topRow">
+<button id="audioButton">AUDIO</button>
+<button id="torchButton">TORCH</button>
+<button id="menuButtonInline">RESUME</button>
+</div>
+
+<div id="levels"></div>
+
+<div class="bottomRow">
+<button id="reloadButton">RELOAD</button>
+<button id="contrastButton">CONTRAST</button>
+<select id="modeSelect">
+<option value="normal">DEFAULT</option>
+<option value="invert">INVERT</option>
+<option value="mono">MONO</option>
+</select>
+</div>
+
+</div>
+
+<div id="infoPanel">
+<div id="infoText">
+
+<p><b>VISUAL VIEWER</b></p>
+
+<p>This viewer uses your device camera to enlarge and enhance the live view in front of you.</p>
+
+<p>Modes such as invert, monochrome and high contrast may help make text, objects or signs easier to see.</p>
+
+<br>
+
+<p><b>IMPORTANT</b></p>
+
+<p>This viewer is intended only as a visual enhancement aid.</p>
+
+<p>It is not designed or certified as a mobility aid and must not be relied upon for navigation, crossing roads, avoiding hazards, or any safety-critical activity.</p>
+
+<p>Always use appropriate mobility aids or assistance where required.</p>
+
+</div>
+</div>
+
+<script>
+
+const video=document.getElementById("camera")
+const menu=document.getElementById("menu")
+const menuButton=document.getElementById("menuButton")
+const menuButtonInline=document.getElementById("menuButtonInline")
+const infoButton=document.getElementById("infoButton")
+const infoPanel=document.getElementById("infoPanel")
+
+const audioButton=document.getElementById("audioButton")
+const torchButton=document.getElementById("torchButton")
+const contrastButton=document.getElementById("contrastButton")
+const reloadButton=document.getElementById("reloadButton")
+const modeSelect=document.getElementById("modeSelect")
+
+let videoTrack=null
+
+let settings={
+zoom:0,
+mode:"normal",
+contrast:false,
+audio:true,
+torch:false
+}
+
+function save(){ localStorage.setItem("vv",JSON.stringify(settings)) }
+function load(){ let s=localStorage.getItem("vv"); if(s) settings=JSON.parse(s) }
+
+function speak(text){
+if(!settings.audio) return
+const msg=new SpeechSynthesisUtterance(text)
+speechSynthesis.cancel()
+speechSynthesis.speak(msg)
+}
+
+/* CAMERA */
+
+async function startCamera(){
+try{
+const stream=await navigator.mediaDevices.getUserMedia({
+video:{ facingMode:{ ideal:"environment" }, frameRate:{ ideal:24,max:24 }},
+audio:false
+})
+video.srcObject=stream
+videoTrack=stream.getVideoTracks()[0]
+speak("Camera ready")
+applyAll()
+}catch{ speak("Camera access denied") }
+}
+
+function pauseCamera(){ if(videoTrack) videoTrack.enabled=false }
+function resumeCamera(){ if(videoTrack) videoTrack.enabled=true }
+
+startCamera()
+
+/* ZOOM */
+
+const zoomValues=[1,1.15,1.3,1.5,1.75,2,2.3,2.6,3,3.4,3.8]
+const levels=document.getElementById("levels")
+
+function setZoom(i){
+settings.zoom=i
+save()
+document.querySelectorAll(".level").forEach((el,idx)=>{
+el.classList.toggle("active",idx<=i)
+})
+video.style.transform=`scale(${zoomValues[i]})`
+speak("Zoom "+i)
+}
+
+zoomValues.forEach((z,i)=>{
+let b=document.createElement("div")
+b.className="level"
+b.textContent=i
+b.onclick=(e)=>{e.stopPropagation();setZoom(i)}
+levels.appendChild(b)
+})
+
+/* FILTERS */
+
+function applyFilters(){
+let c=settings.contrast?3.2:1.35
+let f=`contrast(${c}) brightness(1.2)`
+if(settings.mode==="invert") f="invert(1) "+f
+if(settings.mode==="mono") f="grayscale(1) "+f
+video.style.filter=f
+}
+
+/* APPLY */
+
+function applyAll(){
+setZoom(settings.zoom)
+modeSelect.value=settings.mode
+applyFilters()
+contrastButton.classList.toggle("high",settings.contrast)
+audioButton.classList.toggle("off",!settings.audio)
+}
+
+/* BUTTONS */
+
+audioButton.onclick=(e)=>{
+e.stopPropagation()
+settings.audio=!settings.audio
+audioButton.classList.toggle("off",!settings.audio)
+save()
+speak(settings.audio?"Audio on":"Audio off")
+}
+
+menuButtonInline.onclick=()=>toggleMenu()
+
+function toggleMenu(){
+let open=menu.style.display==="block"
+if(open){
+menu.style.display="none"
+menuButton.textContent="OPTIONS"
+resumeCamera()
+menuButton.style.display="none"
+infoButton.style.display="none"
+}else{
+menu.style.display="block"
+menuButton.textContent="RESUME"
+pauseCamera()
+}
+}
+
+menuButton.onclick=(e)=>{ e.stopPropagation(); toggleMenu() }
+
+</script>
+
+</body>
+</html>

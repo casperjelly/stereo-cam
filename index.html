@@ -100,16 +100,65 @@ right:0;
 bottom:0;
 background:black;
 display:none;
-align-items:center;
-justify-content:center;
+}
+
+#infoContent{
+position:absolute;
+top:12vh;
+left:0;
+right:0;
+bottom:0;
+overflow-y:auto;
 padding:8vw;
 text-align:center;
 }
 
 #infoText{
 max-width:700px;
+margin:auto;
 font-size:4vw;
 line-height:1.6;
+}
+
+/* AUDIO */
+
+#audioButton{
+position:absolute;
+top:3vh;
+left:3vw;
+padding:2vh 3vw;
+font-size:4vw;
+border-radius:1vw;
+border:none;
+background:#c2185b;
+color:white;
+font-weight:bold;
+}
+
+#audioButton.off{
+background:#6a1b3a;
+color:#bbb;
+}
+
+/* TORCH */
+
+#torchButton{
+position:absolute;
+top:3vh;
+left:50%;
+transform:translateX(-50%);
+padding:2vh 3vw;
+font-size:4vw;
+border-radius:1vw;
+border:none;
+background:#ff8f00;
+color:white;
+font-weight:bold;
+}
+
+#torchButton.off{
+background:#7a4f00;
+color:#bbb;
 }
 
 /* ZOOM */
@@ -206,6 +255,9 @@ font-weight:bold;
 
 <div id="menu">
 
+<button id="audioButton">AUDIO</button>
+<button id="torchButton" class="off">TORCH</button>
+
 <button id="reloadButton">RELOAD</button>
 <button id="contrastButton">CONTRAST</button>
 
@@ -220,7 +272,7 @@ font-weight:bold;
 </div>
 
 <div id="infoPanel">
-
+<div id="infoContent">
 <div id="infoText">
 
 <p><b>VISUAL VIEWER</b></p>
@@ -240,7 +292,7 @@ font-weight:bold;
 <p>Always use appropriate mobility aids, assistance, or guidance where required.</p>
 
 </div>
-
+</div>
 </div>
 
 <script>
@@ -255,13 +307,34 @@ const modeSelect=document.getElementById("modeSelect")
 const reloadButton=document.getElementById("reloadButton")
 const contrastButton=document.getElementById("contrastButton")
 
+const audioButton=document.getElementById("audioButton")
+const torchButton=document.getElementById("torchButton")
+
 let videoTrack=null
+let torchOn=false
+let audioOn=true
 
 let mode="normal"
 let highContrast=false
 let dynamicBrightness=1.2
 
+const saved=JSON.parse(localStorage.getItem("viewerSettings")||"{}")
+
+if(saved.mode) mode=saved.mode
+if(saved.highContrast!==undefined) highContrast=saved.highContrast
+if(saved.audioOn!==undefined) audioOn=saved.audioOn
+
+modeSelect.value=mode
+audioButton.classList.toggle("off",!audioOn)
+
+function save(){
+localStorage.setItem("viewerSettings",JSON.stringify({
+mode,highContrast,audioOn
+}))
+}
+
 function speak(text){
+if(!audioOn) return
 const msg=new SpeechSynthesisUtterance(text)
 msg.rate=0.9
 speechSynthesis.cancel()
@@ -288,6 +361,10 @@ audio:false
 video.srcObject=stream
 videoTrack=stream.getVideoTracks()[0]
 
+try{
+videoTrack.applyConstraints({advanced:[{torch:false}]})
+}catch{}
+
 speak("Camera ready")
 
 videoTrack.addEventListener("ended",()=>{
@@ -310,6 +387,48 @@ if(videoTrack) videoTrack.enabled=false
 
 function resumeCamera(){
 if(videoTrack) videoTrack.enabled=true
+}
+
+/* TORCH */
+
+function toggleTorch(){
+if(!videoTrack) return
+
+try{
+torchOn=!torchOn
+
+videoTrack.applyConstraints({
+advanced:[{torch:torchOn}]
+})
+
+torchButton.classList.toggle("off",!torchOn)
+
+speak(torchOn?"Torch on":"Torch off")
+
+}catch{}
+}
+
+torchButton.onclick=(e)=>{
+e.stopPropagation()
+toggleTorch()
+}
+
+/* AUDIO */
+
+audioButton.onclick=(e)=>{
+e.stopPropagation()
+
+if(audioOn){
+speak("Audio off")
+audioOn=false
+}else{
+audioOn=true
+speak("Audio on")
+}
+
+audioButton.classList.toggle("off",!audioOn)
+
+save()
 }
 
 /* ZOOM */
@@ -358,6 +477,7 @@ modeSelect.onchange=()=>{
 mode=modeSelect.value
 speak(modeSelect.options[modeSelect.selectedIndex].text+" mode")
 applyFilters()
+save()
 }
 
 /* CONTRAST */
@@ -373,6 +493,7 @@ contrastButton.classList.toggle("high",highContrast)
 speak(highContrast?"High contrast on":"High contrast off")
 
 applyFilters()
+save()
 
 }
 
@@ -454,7 +575,7 @@ infoButton.onclick=(e)=>{
 
 e.stopPropagation()
 
-const open=infoPanel.style.display==="flex"
+const open=infoPanel.style.display==="block"
 
 if(open){
 
@@ -465,14 +586,18 @@ resumeCamera()
 
 menuButton.style.display="block"
 
+speak("Information closed")
+
 }else{
 
-infoPanel.style.display="flex"
+infoPanel.style.display="block"
 infoButton.textContent="CLOSE"
 
 menuButton.style.display="none"
 
 pauseCamera()
+
+speak("Information open")
 
 }
 
@@ -500,7 +625,7 @@ window.location.href=url.toString()
 
 document.body.addEventListener("click",()=>{
 
-if(menu.style.display!=="block" && infoPanel.style.display!=="flex"){
+if(menu.style.display!=="block" && infoPanel.style.display!=="block"){
 
 menuButton.style.display="block"
 infoButton.style.display="block"

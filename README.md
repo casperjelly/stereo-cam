@@ -22,6 +22,7 @@ Features:
 - 24fps capture for improved battery life
 - Full screen display
 - No recording or storage of images
+- Optional torch (flashlight) support on compatible devices
 
 ---
 
@@ -78,6 +79,14 @@ This improves visibility while minimising CPU load.
 
 ---
 
+## Torch
+
+A **Torch** toggle enables the device flashlight when supported.
+
+This can improve visibility in low-light environments and works alongside zoom and contrast features.
+
+---
+
 ## Voice Feedback
 
 The viewer uses the device speech synthesis engine to provide audio confirmation for key actions.
@@ -88,8 +97,11 @@ Examples include:
 - Zoom level changes
 - Mode changes
 - Contrast toggle
+- Torch toggle
 - Reload countdown
 - Camera stopped
+
+Audio feedback can be enabled or disabled using the **Audio** toggle.
 
 ---
 
@@ -108,6 +120,8 @@ A tap reveals:
 
 The Options panel provides:
 
+- Audio toggle
+- Torch toggle
 - Zoom controls
 - Contrast toggle
 - Mode selector
@@ -119,7 +133,7 @@ The Options panel provides:
 
 The Info panel provides a description of the viewer and an important safety notice.
 
-The panel is vertically centred for easy reading.
+The panel is vertically centred for easy reading and scrollable on smaller screens.
 
 ---
 
@@ -163,6 +177,7 @@ Design principles include:
 - high colour contrast
 - minimal interface clutter
 - audible feedback
+- simplified toggle-based controls (no fine sliders)
 
 ---
 

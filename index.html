@@ -317,19 +317,21 @@ let audioOn=true
 let mode="normal"
 let highContrast=false
 let dynamicBrightness=1.2
+let zoomLevel=0
 
 const saved=JSON.parse(localStorage.getItem("viewerSettings")||"{}")
 
 if(saved.mode) mode=saved.mode
 if(saved.highContrast!==undefined) highContrast=saved.highContrast
 if(saved.audioOn!==undefined) audioOn=saved.audioOn
+if(saved.zoomLevel!==undefined) zoomLevel=saved.zoomLevel
 
 modeSelect.value=mode
 audioButton.classList.toggle("off",!audioOn)
 
 function save(){
 localStorage.setItem("viewerSettings",JSON.stringify({
-mode,highContrast,audioOn
+mode,highContrast,audioOn,zoomLevel
 }))
 }
 
@@ -436,7 +438,9 @@ save()
 const zoomValues=[100,115,130,150,175,200,230,260,300,340,380]
 const levels=document.getElementById("levels")
 
-function setZoom(i){
+function applyZoom(i){
+
+zoomLevel=i
 
 document.querySelectorAll(".level").forEach((el,index)=>{
 el.classList.toggle("active",index<=i)
@@ -444,8 +448,15 @@ el.classList.toggle("active",index<=i)
 
 video.style.transform=`scale(${zoomValues[i]/100})`
 
+}
+
+function setZoom(i){
+
+applyZoom(i)
+
 speak("Zoom "+i)
 
+save()
 }
 
 zoomValues.forEach((z,i)=>{
@@ -456,7 +467,7 @@ b.onclick=(e)=>{e.stopPropagation();setZoom(i)}
 levels.appendChild(b)
 })
 
-setZoom(0)
+applyZoom(zoomLevel)
 
 /* FILTERS */
 

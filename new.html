@@ -100,15 +100,22 @@ right:0;
 bottom:0;
 background:black;
 display:none;
-align-items:center;
-justify-content:center;
+}
+
+#infoContent{
+position:absolute;
+top:12vh;
+left:0;
+right:0;
+bottom:0;
+overflow-y:auto;
 padding:8vw;
 text-align:center;
-overflow-y:auto;
 }
 
 #infoText{
 max-width:700px;
+margin:auto;
 font-size:4vw;
 line-height:1.6;
 }
@@ -265,7 +272,7 @@ font-weight:bold;
 </div>
 
 <div id="infoPanel">
-
+<div id="infoContent">
 <div id="infoText">
 
 <p><b>VISUAL VIEWER</b></p>
@@ -285,7 +292,7 @@ font-weight:bold;
 <p>Always use appropriate mobility aids, assistance, or guidance where required.</p>
 
 </div>
-
+</div>
 </div>
 
 <script>
@@ -409,9 +416,17 @@ toggleTorch()
 
 audioButton.onclick=(e)=>{
 e.stopPropagation()
-audioOn=!audioOn
+
+if(audioOn){
+speak("Audio off")
+audioOn=false
+}else{
+audioOn=true
+speak("Audio on")
+}
+
 audioButton.classList.toggle("off",!audioOn)
-speak(audioOn?"Audio on":"Audio off")
+
 save()
 }
 
@@ -559,7 +574,7 @@ infoButton.onclick=(e)=>{
 
 e.stopPropagation()
 
-const open=infoPanel.style.display==="flex"
+const open=infoPanel.style.display==="block"
 
 if(open){
 
@@ -570,14 +585,18 @@ resumeCamera()
 
 menuButton.style.display="block"
 
+speak("Information closed")
+
 }else{
 
-infoPanel.style.display="flex"
+infoPanel.style.display="block"
 infoButton.textContent="CLOSE"
 
 menuButton.style.display="none"
 
 pauseCamera()
+
+speak("Information open")
 
 }
 
@@ -605,7 +624,7 @@ window.location.href=url.toString()
 
 document.body.addEventListener("click",()=>{
 
-if(menu.style.display!=="block" && infoPanel.style.display!=="flex"){
+if(menu.style.display!=="block" && infoPanel.style.display!=="block"){
 
 menuButton.style.display="block"
 infoButton.style.display="block"

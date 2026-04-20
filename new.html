@@ -44,39 +44,41 @@ height:100vh;
 object-fit:cover;
 }
 
-/* buttons */
-
-button, select{
-padding:2vh 3vw;
-font-size:4vw;
-border-radius:1vw;
-border:none;
-font-weight:bold;
-}
-
-/* top controls */
+/* OPTIONS */
 
 #menuButton{
 position:fixed;
 top:3vh;
 right:3vw;
+padding:2vh 3vw;
+font-size:4vw;
+border-radius:1vw;
+border:none;
 background:#1faa3c;
 color:white;
-display:none;
+font-weight:bold;
 z-index:10;
+display:none;
 }
+
+/* INFO BUTTON */
 
 #infoButton{
 position:fixed;
 top:3vh;
 left:3vw;
+padding:2vh 3vw;
+font-size:4vw;
+border-radius:1vw;
+border:none;
 background:#444;
 color:white;
+font-weight:bold;
 display:none;
 z-index:10;
 }
 
-/* panels */
+/* MENU PANEL */
 
 #menu{
 position:fixed;
@@ -88,6 +90,8 @@ background:black;
 display:none;
 }
 
+/* INFO PANEL */
+
 #infoPanel{
 position:fixed;
 top:0;
@@ -96,17 +100,61 @@ right:0;
 bottom:0;
 background:black;
 display:none;
-flex-direction:column;
+align-items:center;
+justify-content:center;
+padding:8vw;
+text-align:center;
 overflow-y:auto;
-padding:6vh 6vw;
 }
 
 #infoText{
+max-width:700px;
 font-size:4vw;
 line-height:1.6;
 }
 
-/* zoom */
+/* AUDIO */
+
+#audioButton{
+position:absolute;
+top:4vh;
+left:3vw;
+padding:2vh 3vw;
+font-size:4vw;
+border-radius:1vw;
+border:none;
+background:#0d47a1;
+color:white;
+font-weight:bold;
+}
+
+#audioButton.off{
+background:#082a63;
+color:#bbb;
+}
+
+/* TORCH */
+
+#torchButton{
+position:absolute;
+top:4vh;
+left:50%;
+transform:translateX(-50%);
+padding:2vh 3vw;
+font-size:4vw;
+border-radius:1vw;
+border:none;
+background:#ff8f00;
+color:white;
+font-weight:bold;
+}
+
+#torchButton.off{
+background:#7a4f00;
+color:#bbb;
+}
+
+/* ZOOM */
 
 #levels{
 position:absolute;
@@ -126,6 +174,8 @@ border-radius:1vw;
 display:flex;
 align-items:center;
 justify-content:center;
+font-size:4vw;
+font-weight:bold;
 color:white;
 }
 
@@ -133,35 +183,55 @@ color:white;
 background:#2c7be5;
 }
 
-/* rows */
+/* RELOAD */
 
-.topRow, .bottomRow{
+#reloadButton{
 position:absolute;
-width:100%;
-display:flex;
-justify-content:space-around;
-align-items:center;
+bottom:4vh;
+left:3vw;
+padding:2vh 3vw;
+font-size:4vw;
+border-radius:1vw;
+border:none;
+background:#d92c2c;
+color:white;
+font-weight:bold;
 }
 
-.topRow{ top:10vh; }
-.bottomRow{ bottom:4vh; }
+/* CONTRAST */
 
-/* colours */
+#contrastButton{
+position:absolute;
+bottom:4vh;
+left:50%;
+transform:translateX(-50%);
+padding:2vh 3vw;
+font-size:4vw;
+border-radius:1vw;
+border:none;
+background:#3e1c73;
+color:#bbb;
+font-weight:bold;
+}
 
-#audioButton{ background:#0ea5a5; color:white; }
-#audioButton.off{ background:#134e4a; color:#aaa; }
+#contrastButton.high{
+background:#7a3fd1;
+color:white;
+}
 
-#torchButton{ background:#b45309; color:white; }
-#torchButton.on{ background:#f59e0b; color:black; }
-
-#contrastButton{ background:#3e1c73; color:#bbb; }
-#contrastButton.high{ background:#7a3fd1; color:white; }
-
-#reloadButton{ background:#d92c2c; color:white; }
+/* MODE */
 
 #modeSelect{
+position:absolute;
+bottom:4vh;
+right:3vw;
+padding:2vh 3vw;
+font-size:4vw;
+border-radius:1vw;
+border:none;
 background:#00695c;
 color:white;
+font-weight:bold;
 }
 
 </style>
@@ -178,27 +248,24 @@ color:white;
 
 <div id="menu">
 
-<div class="topRow">
 <button id="audioButton">AUDIO</button>
 <button id="torchButton">TORCH</button>
-<button id="menuButtonInline">RESUME</button>
-</div>
+
+<button id="reloadButton">RELOAD</button>
+<button id="contrastButton">CONTRAST</button>
 
 <div id="levels"></div>
 
-<div class="bottomRow">
-<button id="reloadButton">RELOAD</button>
-<button id="contrastButton">CONTRAST</button>
 <select id="modeSelect">
 <option value="normal">DEFAULT</option>
 <option value="invert">INVERT</option>
 <option value="mono">MONO</option>
 </select>
-</div>
 
 </div>
 
 <div id="infoPanel">
+
 <div id="infoText">
 
 <p><b>VISUAL VIEWER</b></p>
@@ -215,9 +282,10 @@ color:white;
 
 <p>It is not designed or certified as a mobility aid and must not be relied upon for navigation, crossing roads, avoiding hazards, or any safety-critical activity.</p>
 
-<p>Always use appropriate mobility aids or assistance where required.</p>
+<p>Always use appropriate mobility aids, assistance, or guidance where required.</p>
 
 </div>
+
 </div>
 
 <script>
@@ -225,32 +293,43 @@ color:white;
 const video=document.getElementById("camera")
 const menu=document.getElementById("menu")
 const menuButton=document.getElementById("menuButton")
-const menuButtonInline=document.getElementById("menuButtonInline")
 const infoButton=document.getElementById("infoButton")
 const infoPanel=document.getElementById("infoPanel")
 
+const modeSelect=document.getElementById("modeSelect")
+const reloadButton=document.getElementById("reloadButton")
+const contrastButton=document.getElementById("contrastButton")
+
 const audioButton=document.getElementById("audioButton")
 const torchButton=document.getElementById("torchButton")
-const contrastButton=document.getElementById("contrastButton")
-const reloadButton=document.getElementById("reloadButton")
-const modeSelect=document.getElementById("modeSelect")
 
 let videoTrack=null
+let torchOn=false
+let audioOn=true
 
-let settings={
-zoom:0,
-mode:"normal",
-contrast:false,
-audio:true,
-torch:false
+let mode="normal"
+let highContrast=false
+let dynamicBrightness=1.2
+
+const saved=JSON.parse(localStorage.getItem("viewerSettings")||"{}")
+
+if(saved.mode) mode=saved.mode
+if(saved.highContrast!==undefined) highContrast=saved.highContrast
+if(saved.audioOn!==undefined) audioOn=saved.audioOn
+if(saved.torchOn!==undefined) torchOn=saved.torchOn
+
+modeSelect.value=mode
+
+function save(){
+localStorage.setItem("viewerSettings",JSON.stringify({
+mode,highContrast,audioOn,torchOn
+}))
 }
 
-function save(){ localStorage.setItem("vv",JSON.stringify(settings)) }
-function load(){ let s=localStorage.getItem("vv"); if(s) settings=JSON.parse(s) }
-
 function speak(text){
-if(!settings.audio) return
+if(!audioOn) return
 const msg=new SpeechSynthesisUtterance(text)
+msg.rate=0.9
 speechSynthesis.cancel()
 speechSynthesis.speak(msg)
 }
@@ -258,94 +337,282 @@ speechSynthesis.speak(msg)
 /* CAMERA */
 
 async function startCamera(){
+
 try{
+
 const stream=await navigator.mediaDevices.getUserMedia({
-video:{ facingMode:{ ideal:"environment" }, frameRate:{ ideal:24,max:24 }},
+
+video:{
+facingMode:{ ideal:"environment" },
+frameRate:{ ideal:24,max:24 }
+},
+
 audio:false
+
 })
+
 video.srcObject=stream
 videoTrack=stream.getVideoTracks()[0]
+
+if(torchOn) toggleTorch(true)
+
 speak("Camera ready")
-applyAll()
-}catch{ speak("Camera access denied") }
+
+videoTrack.addEventListener("ended",()=>{
+speak("Camera stopped. Please reopen the app.")
+})
+
+}catch{
+
+speak("Camera access denied")
+
 }
 
-function pauseCamera(){ if(videoTrack) videoTrack.enabled=false }
-function resumeCamera(){ if(videoTrack) videoTrack.enabled=true }
+}
 
 startCamera()
 
+function pauseCamera(){
+if(videoTrack) videoTrack.enabled=false
+}
+
+function resumeCamera(){
+if(videoTrack) videoTrack.enabled=true
+}
+
+/* TORCH */
+
+function toggleTorch(force){
+if(!videoTrack) return
+
+try{
+torchOn=force!==undefined?force:!torchOn
+
+videoTrack.applyConstraints({
+advanced:[{torch:torchOn}]
+})
+
+torchButton.classList.toggle("off",!torchOn)
+
+speak(torchOn?"Torch on":"Torch off")
+save()
+
+}catch{}
+}
+
+torchButton.onclick=(e)=>{
+e.stopPropagation()
+toggleTorch()
+}
+
+/* AUDIO */
+
+audioButton.onclick=(e)=>{
+e.stopPropagation()
+audioOn=!audioOn
+audioButton.classList.toggle("off",!audioOn)
+speak(audioOn?"Audio on":"Audio off")
+save()
+}
+
 /* ZOOM */
 
-const zoomValues=[1,1.15,1.3,1.5,1.75,2,2.3,2.6,3,3.4,3.8]
+const zoomValues=[100,115,130,150,175,200,230,260,300,340,380]
 const levels=document.getElementById("levels")
 
 function setZoom(i){
-settings.zoom=i
-save()
-document.querySelectorAll(".level").forEach((el,idx)=>{
-el.classList.toggle("active",idx<=i)
+
+document.querySelectorAll(".level").forEach((el,index)=>{
+el.classList.toggle("active",index<=i)
 })
-video.style.transform=`scale(${zoomValues[i]})`
+
+video.style.transform=`scale(${zoomValues[i]/100})`
+
 speak("Zoom "+i)
+
 }
 
 zoomValues.forEach((z,i)=>{
-let b=document.createElement("div")
+const b=document.createElement("div")
 b.className="level"
 b.textContent=i
 b.onclick=(e)=>{e.stopPropagation();setZoom(i)}
 levels.appendChild(b)
 })
 
+setZoom(0)
+
 /* FILTERS */
 
 function applyFilters(){
-let c=settings.contrast?3.2:1.35
-let f=`contrast(${c}) brightness(1.2)`
-if(settings.mode==="invert") f="invert(1) "+f
-if(settings.mode==="mono") f="grayscale(1) "+f
-video.style.filter=f
+
+let contrastLevel=highContrast?3.2:1.35
+
+let filter=`contrast(${contrastLevel}) brightness(${dynamicBrightness})`
+
+if(mode==="invert") filter="invert(1) "+filter
+if(mode==="mono") filter="grayscale(1) "+filter
+
+video.style.filter=filter
+
 }
 
-/* APPLY */
-
-function applyAll(){
-setZoom(settings.zoom)
-modeSelect.value=settings.mode
+modeSelect.onchange=()=>{
+mode=modeSelect.value
+speak(modeSelect.options[modeSelect.selectedIndex].text+" mode")
 applyFilters()
-contrastButton.classList.toggle("high",settings.contrast)
-audioButton.classList.toggle("off",!settings.audio)
-}
-
-/* BUTTONS */
-
-audioButton.onclick=(e)=>{
-e.stopPropagation()
-settings.audio=!settings.audio
-audioButton.classList.toggle("off",!settings.audio)
 save()
-speak(settings.audio?"Audio on":"Audio off")
 }
 
-menuButtonInline.onclick=()=>toggleMenu()
+/* CONTRAST */
 
-function toggleMenu(){
-let open=menu.style.display==="block"
+contrastButton.onclick=(e)=>{
+
+e.stopPropagation()
+
+highContrast=!highContrast
+
+contrastButton.classList.toggle("high",highContrast)
+
+speak(highContrast?"High contrast on":"High contrast off")
+
+applyFilters()
+save()
+
+}
+
+/* BRIGHTNESS */
+
+const canvas=document.createElement("canvas")
+const ctx=canvas.getContext("2d")
+
+canvas.width=32
+canvas.height=32
+
+let lastBrightness=0
+
+function analyseBrightness(){
+
+if(video.readyState<2) return
+
+ctx.drawImage(video,0,0,32,32)
+
+let d=ctx.getImageData(0,0,32,32).data
+
+let total=0
+
+for(let i=0;i<d.length;i+=4)
+total+=(d[i]*0.2126+d[i+1]*0.7152+d[i+2]*0.0722)
+
+let avg=total/(d.length/4)
+
+if(Math.abs(avg-lastBrightness)<10) return
+
+lastBrightness=avg
+
+dynamicBrightness=avg<80?1.5:1.2
+
+applyFilters()
+
+}
+
+setInterval(analyseBrightness,3000)
+
+/* OPTIONS */
+
+menuButton.onclick=(e)=>{
+
+e.stopPropagation()
+
+const open=menu.style.display==="block"
+
 if(open){
+
 menu.style.display="none"
 menuButton.textContent="OPTIONS"
+
 resumeCamera()
+
 menuButton.style.display="none"
 infoButton.style.display="none"
+
+speak("Resume camera view")
+
 }else{
+
 menu.style.display="block"
 menuButton.textContent="RESUME"
+
+infoButton.style.display="none"
+
 pauseCamera()
-}
+
+speak("Options menu")
+
 }
 
-menuButton.onclick=(e)=>{ e.stopPropagation(); toggleMenu() }
+}
+
+/* INFO */
+
+infoButton.onclick=(e)=>{
+
+e.stopPropagation()
+
+const open=infoPanel.style.display==="flex"
+
+if(open){
+
+infoPanel.style.display="none"
+infoButton.textContent="INFO"
+
+resumeCamera()
+
+menuButton.style.display="block"
+
+}else{
+
+infoPanel.style.display="flex"
+infoButton.textContent="CLOSE"
+
+menuButton.style.display="none"
+
+pauseCamera()
+
+}
+
+}
+
+/* RELOAD */
+
+reloadButton.onclick=(e)=>{
+
+e.stopPropagation()
+
+speak("Reloading app in three seconds")
+
+setTimeout(()=>{
+
+const url=new URL(window.location.href)
+url.searchParams.set("reload",Date.now())
+window.location.href=url.toString()
+
+},3000)
+
+}
+
+/* SHOW BUTTONS */
+
+document.body.addEventListener("click",()=>{
+
+if(menu.style.display!=="block" && infoPanel.style.display!=="flex"){
+
+menuButton.style.display="block"
+infoButton.style.display="block"
+
+}
+
+})
 
 </script>
 

@@ -124,19 +124,19 @@ line-height:1.6;
 
 #audioButton{
 position:absolute;
-top:4vh;
+top:3vh;
 left:3vw;
 padding:2vh 3vw;
 font-size:4vw;
 border-radius:1vw;
 border:none;
-background:#0d47a1;
+background:#c2185b;
 color:white;
 font-weight:bold;
 }
 
 #audioButton.off{
-background:#082a63;
+background:#6a1b3a;
 color:#bbb;
 }
 
@@ -144,7 +144,7 @@ color:#bbb;
 
 #torchButton{
 position:absolute;
-top:4vh;
+top:3vh;
 left:50%;
 transform:translateX(-50%);
 padding:2vh 3vw;
@@ -323,13 +323,13 @@ const saved=JSON.parse(localStorage.getItem("viewerSettings")||"{}")
 if(saved.mode) mode=saved.mode
 if(saved.highContrast!==undefined) highContrast=saved.highContrast
 if(saved.audioOn!==undefined) audioOn=saved.audioOn
-if(saved.torchOn!==undefined) torchOn=saved.torchOn
 
 modeSelect.value=mode
+audioButton.classList.toggle("off",!audioOn)
 
 function save(){
 localStorage.setItem("viewerSettings",JSON.stringify({
-mode,highContrast,audioOn,torchOn
+mode,highContrast,audioOn
 }))
 }
 
@@ -361,7 +361,9 @@ audio:false
 video.srcObject=stream
 videoTrack=stream.getVideoTracks()[0]
 
-if(torchOn) toggleTorch(true)
+try{
+videoTrack.applyConstraints({advanced:[{torch:false}]})
+}catch{}
 
 speak("Camera ready")
 
@@ -389,11 +391,11 @@ if(videoTrack) videoTrack.enabled=true
 
 /* TORCH */
 
-function toggleTorch(force){
+function toggleTorch(){
 if(!videoTrack) return
 
 try{
-torchOn=force!==undefined?force:!torchOn
+torchOn=!torchOn
 
 videoTrack.applyConstraints({
 advanced:[{torch:torchOn}]
@@ -402,7 +404,6 @@ advanced:[{torch:torchOn}]
 torchButton.classList.toggle("off",!torchOn)
 
 speak(torchOn?"Torch on":"Torch off")
-save()
 
 }catch{}
 }
@@ -599,24 +600,6 @@ pauseCamera()
 speak("Information open")
 
 }
-
-}
-
-/* RELOAD */
-
-reloadButton.onclick=(e)=>{
-
-e.stopPropagation()
-
-speak("Reloading app in three seconds")
-
-setTimeout(()=>{
-
-const url=new URL(window.location.href)
-url.searchParams.set("reload",Date.now())
-window.location.href=url.toString()
-
-},3000)
 
 }
 
